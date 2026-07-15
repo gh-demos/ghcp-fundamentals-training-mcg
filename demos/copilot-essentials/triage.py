@@ -27,6 +27,9 @@ class ParsedLine(NamedTuple):
     path: str
 
 
+HTTP_STATUS_CODE_LENGTH = 3
+
+
 # Common/combined log pattern:
 # 127.0.0.1 - - [15/Jul/2025:14:23:41 +0000] "GET /health HTTP/1.1" 200 123
 LOG_PATTERN = re.compile(
@@ -110,7 +113,7 @@ def parse_status_filter(status_arg: str | None) -> set[int] | None:
         if not token:
             continue
 
-        if not token.isdigit() or len(token) != 3:
+        if not token.isdigit() or len(token) != HTTP_STATUS_CODE_LENGTH:
             raise ValueError(f"Invalid status code: {token}")
 
         values.add(int(token))
