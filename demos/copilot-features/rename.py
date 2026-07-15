@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 from pathlib import Path
 from typing import Iterable
 
@@ -43,11 +44,10 @@ def is_excluded(path: Path, root: Path) -> bool:
 
 
 def iter_files(root: Path) -> Iterable[Path]:
-    for path in root.rglob("*"):
-        if is_excluded(path, root):
-            continue
-        if path.is_file():
-            yield path
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d not in EXCLUDED_DIRS]
+        for filename in filenames:
+            yield Path(dirpath) / filename
 
 
 def replace_in_file(file_path: Path, summary: Summary, dry_run: bool) -> None:
@@ -64,7 +64,12 @@ def replace_in_file(file_path: Path, summary: Summary, dry_run: bool) -> None:
 
     updated = original.replace(SOURCE_PREFIX, TARGET_PREFIX)
     if not dry_run:
-        file_path.write_text(updated, encoding=DEFAULT_ENCODING)
+        try:
+            file_path.write_text(updated, encoding=DEFAULT_ENCODING)
+        except OSError as exc:
+            summary.errors += 1
+            logger.error("ERROR writing %s: %s", file_path, exc)
+            return
 
     summary.files_updated += 1
     summary.symbol_replacements += replacement_count

@@ -171,7 +171,9 @@ def main() -> int:
     if not file_path.exists():
         parser.error(f"File not found: {file_path}")
 
-    if file_path.suffix not in {".log", ".gz"}:
+    valid_suffixes = (".log", ".log.gz")
+    file_name = file_path.name
+    if not any(file_name.endswith(s) for s in valid_suffixes):
         parser.error("Input must be a .log or .log.gz file")
 
     try:
